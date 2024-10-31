@@ -1,6 +1,6 @@
 package com.github.yuyenews.data.processing.demo.pac;
 
-import com.github.yuyenews.data.processing.pac.MagicianConsumer;
+import com.magician.tools.processing.pac.MagicianConsumer;
 
 public class DemoConsumerThree extends MagicianConsumer {
 

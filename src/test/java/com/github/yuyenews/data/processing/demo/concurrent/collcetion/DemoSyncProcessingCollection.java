@@ -1,6 +1,6 @@
 package com.github.yuyenews.data.processing.demo.concurrent.collcetion;
 
-import com.github.yuyenews.data.processing.MagicianDataProcessing;
+import com.magician.tools.processing.MagicianDataProcessing;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,10 +1,10 @@
 package com.github.yuyenews.data.processing.demo.concurrent.map;
 
-import com.github.yuyenews.data.processing.MagicianDataProcessing;
+
+import com.magician.tools.processing.MagicianDataProcessing;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 public class DemoAsyncProcessingMap {
 

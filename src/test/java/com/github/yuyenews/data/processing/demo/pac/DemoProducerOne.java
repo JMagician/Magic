@@ -1,6 +1,7 @@
 package com.github.yuyenews.data.processing.demo.pac;
 
-import com.github.yuyenews.data.processing.pac.MagicianProducer;
+
+import com.magician.tools.processing.pac.MagicianProducer;
 
 public class DemoProducerOne extends MagicianProducer {
 

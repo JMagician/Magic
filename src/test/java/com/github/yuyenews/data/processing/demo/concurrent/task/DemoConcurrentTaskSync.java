@@ -1,7 +1,8 @@
 package com.github.yuyenews.data.processing.demo.concurrent.task;
 
-import com.github.yuyenews.data.processing.MagicianDataProcessing;
-import com.github.yuyenews.data.processing.commons.enums.ConcurrentTaskResultEnum;
+
+import com.magician.tools.processing.MagicianDataProcessing;
+import com.magician.tools.processing.commons.enums.ConcurrentTaskResultEnum;
 
 import java.util.concurrent.TimeUnit;
 

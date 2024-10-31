@@ -1,7 +1,7 @@
 package com.github.yuyenews.data.processing.demo.pac;
 
-import com.github.yuyenews.data.processing.MagicianDataProcessing;
 
+import com.magician.tools.processing.MagicianDataProcessing;
 
 public class ProducerAndConsumerDemo {
 
