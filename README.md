@@ -1,20 +1,20 @@
 <h1> 
-    <a href="https://magician-io.com">Magician-DataProcessing</a> ·
+    <a href="https://magician-io.com">Magician-Tools</a> ·
     <img src="https://img.shields.io/badge/licenes-MIT-brightgreen.svg"/>
-    <img src="https://img.shields.io/badge/jdk-8+-brightgreen.svg"/>
-    <img src="https://img.shields.io/badge/maven-3.5.4+-brightgreen.svg"/>
+    <img src="https://img.shields.io/badge/jdk-17+-brightgreen.svg"/>
+    <!-- <img src="https://img.shields.io/badge/maven-3.5.4+-brightgreen.svg"/> -->
     <img src="https://img.shields.io/badge/release-master-brightgreen.svg"/>
 </h1>
 
-Magician-DataProcessing 是一个用Java开发的数据处理框架，支持并发处理以及生产者与消费者模型
+Magician-Tools 是一个用Java开发的工具包，支持并发处理、生产者与消费者模型、数据库操作等
 
 ## 运行环境
 
-JDK8+
+JDK17
 
 ## 文档
 
-[https://magician-io.com/dataprocessing](https://magician-io.com/dataprocessing)
+[https://magician-io.com/tools](https://magician-io.com/tools)
 
 ## 示例
 
@@ -22,8 +22,8 @@ JDK8+
 ```xml
 <dependency>
     <groupId>com.github.yuyenews</groupId>
-    <artifactId>Magician-DataProcessing</artifactId>
-    <version>1.0.1</version>
+    <artifactId>Magician-Tools</artifactId>
+    <version>1.0.0</version>
 </dependency>
 ```
 
