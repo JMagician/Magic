@@ -67,7 +67,7 @@ ImsCardInfoPO cardInfoPO = ImsCardInfoPO.builder()
 DBUtils.get(jdbcTemplate).insert("m_user_info", cardInfoPO);
 ```
 
-### 单表更新
+#### 单表更新
 
 ```java
 // 创建修改条件
@@ -88,7 +88,7 @@ ImsCardInfoPO cardInfoPO = ImsCardInfoPO.builder()
 DBUtils.get(jdbcTemplate).update("m_user_info", cardInfoPO, conditionBuilder);
 ```
 
-### 单表删除
+#### 单表删除
 
 ```java
 // 创建删除条件
@@ -98,7 +98,7 @@ ConditionBuilder = conditionBuilder = ConditionBuilder.createCondition()
 DBUtils.get(jdbcTemplate).delete("m_user_info", conditionBuilder);
 ```
 
-### 自定义SQL查询
+#### 自定义SQL查询
 
 ```java
 ImsCardInfoPO cardInfoPO = ImsCardInfoPO.builder()
