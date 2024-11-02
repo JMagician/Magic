@@ -45,7 +45,7 @@ ConditionBuilder conditionBuilder = ConditionBuilder.createCondition()
                 .add(" order by age desc", Condition.NOT_WHERE);
 
 // 执行查询操作
-List<DemoPO> demoPOS = DBUtils.get(jdbcTemplate)
+List<DemoPO> demoPOS = MagicDBUtils.get(jdbcTemplate)
         .select("m_user_info", conditionBuilder, DemoPO.class);
 ```
 
@@ -64,7 +64,7 @@ DemoPO demoPO = DemoPO.builder()
                     .build();
 
 // 执行插入操作
-DBUtils.get(jdbcTemplate).insert("m_user_info", demoPO);
+MagicDBUtils.get(jdbcTemplate).insert("m_user_info", demoPO);
 ```
 
 #### 单表更新
@@ -85,7 +85,7 @@ DemoPO demoPO = DemoPO.builder()
         .build();
 
 // 执行修改操作
-DBUtils.get(jdbcTemplate).update("m_user_info", demoPO, conditionBuilder);
+MagicDBUtils.get(jdbcTemplate).update("m_user_info", demoPO, conditionBuilder);
 ```
 
 #### 单表删除
@@ -95,7 +95,7 @@ DBUtils.get(jdbcTemplate).update("m_user_info", demoPO, conditionBuilder);
 ConditionBuilder = conditionBuilder = ConditionBuilder.createCondition()
                 .add("id = ?", "00df4362-d7ad-48d2-8bcb-05cf859b7e64");
 // 执行删除操作
-DBUtils.get(jdbcTemplate).delete("m_user_info", conditionBuilder);
+MagicDBUtils.get(jdbcTemplate).delete("m_user_info", conditionBuilder);
 ```
 
 #### 自定义SQL查询
@@ -105,7 +105,7 @@ DemoPO demoPO = DemoPO.builder()
                 .age(122)
                 .build();
 
-DBUtils.get(jdbcTemplate).selectList("select * from m_user_info where age > {age}", demoPO, DemoPO.class);
+MagicDBUtils.get(jdbcTemplate).selectList("select * from m_user_info where age > {age}", demoPO, DemoPO.class);
 ```
 
 #### 自定义SQL分页
@@ -121,13 +121,13 @@ PageParamModel pageParamModel = PageParamModel
                         );
 
 // 执行查询操作
-PageModel<DemoPO> pageModel = DBUtils.get(jdbcTemplate).selectPage("select * from m_user_info where age > {age}", pageParamModel, DemoPO.class);
+PageModel<DemoPO> pageModel = MagicDBUtils.get(jdbcTemplate).selectPage("select * from m_user_info where age > {age}", pageParamModel, DemoPO.class);
 ```
 
 ### 03 并发处理任务
 
 ```java
-MagicianDataProcessing.getConcurrentTaskSync()
+MagicDataProcessing.getConcurrentTaskSync()
                 .setTimeout(1000) // 超时时间
                 .setTimeUnit(TimeUnit.MILLISECONDS) // 超时时间的单位
                 .add(() -> { // 添加一个任务
@@ -164,7 +164,7 @@ MagicianDataProcessing.getConcurrentTaskSync()
 List<String> dataList = new ArrayList<>();
 
 // 只需要将他传入syncRunner方法即可，每个参数的具体含义可以参考文档
-MagicianDataProcessing.getConcurrentCollectionSync()
+MagicDataProcessing.getConcurrentCollectionSync()
         .syncRunner(dataList, data -> {
 
             // 这里可以拿到List里的元素，进行处理
@@ -173,7 +173,7 @@ MagicianDataProcessing.getConcurrentCollectionSync()
         }, 10, 1, TimeUnit.MINUTES);
 
 // 也可以用syncGroupRunner方法，每个参数的具体含义可以参考文档
-MagicianDataProcessing.getConcurrentCollectionSync()
+MagicDataProcessing.getConcurrentCollectionSync()
         .syncGroupRunner(dataList, data -> {
 
             // 这里是每一组List
@@ -189,7 +189,7 @@ MagicianDataProcessing.getConcurrentCollectionSync()
 
 ```java
 // 创建一组生产者与消费者，支持多对多
-MagicianDataProcessing.getProducerAndConsumerManager()
+MagicDataProcessing.getProducerAndConsumerManager()
         .addProducer(new MagicianProducer() { // 添加一个生产者（可以添加多个）
             
             @Override
