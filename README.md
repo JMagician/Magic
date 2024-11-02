@@ -1,12 +1,12 @@
 <h1> 
-    <a href="https://magician-io.com">Magician-Tools</a> ·
+    <a href="https://magician-io.com">Magic</a> ·
     <img src="https://img.shields.io/badge/licenes-MIT-brightgreen.svg"/>
     <img src="https://img.shields.io/badge/jdk-17+-brightgreen.svg"/>
     <!-- <img src="https://img.shields.io/badge/maven-3.5.4+-brightgreen.svg"/> -->
     <img src="https://img.shields.io/badge/release-master-brightgreen.svg"/>
 </h1>
 
-Magician-Tools 是一个用Java开发的工具包，支持并发处理、生产者与消费者模型、数据库操作等
+Magic是Magician旗下的一个工具包，支持并发处理、生产者与消费者模型、数据库操作等
 
 ## 运行环境
 
@@ -22,9 +22,106 @@ JDK17
 ```xml
 <dependency>
     <groupId>com.github.yuyenews</groupId>
-    <artifactId>Magician-Tools</artifactId>
+    <artifactId>Magic</artifactId>
     <version>1.0.0</version>
 </dependency>
+```
+
+### 数据库操作
+
+#### 首先需要创建一个Spring的JdbcTemplate对象
+
+```java
+@Resource
+private JdbcTemplate jdbcTemplate;
+```
+
+#### 单表查询
+
+```java
+// 创建查询条件
+ConditionBuilder conditionBuilder = ConditionBuilder.createCondition()
+                .add("age = ?", "300")
+                .add(" order by age desc", Condition.NOT_WHERE);
+
+// 执行查询操作
+List<ImsCardInfoPO> imsCardInfoPOS = DBUtils.get(jdbcTemplate)
+        .select("m_user_info", conditionBuilder, ImsCardInfoPO.class);
+```
+
+#### 单表插入
+
+```java
+// 创建要插入的对象和值
+ImsCardInfoPO cardInfoPO = ImsCardInfoPO.builder()
+                    .id(UUID.randomUUID().toString())
+                    .age(18)
+                    .content("哈哈哈")
+                    .amount(new BigDecimal("10000"))
+                    .length(new BigInteger("10000000000"))
+                    .createTime(new Date())
+                    .updateTime(new Date())
+                    .build();
+
+// 执行插入操作
+DBUtils.get(jdbcTemplate).insert("m_user_info", cardInfoPO);
+```
+
+### 单表更新
+
+```java
+// 创建修改条件
+ConditionBuilder = conditionBuilder = ConditionBuilder.createCondition()
+                .add("id = ? and age = ?", "00df4362-d7ad-48d2-8bcb-05cf859b7e64", 500);
+
+// 需要修改的字段和对应的值
+ImsCardInfoPO cardInfoPO = ImsCardInfoPO.builder()
+        .age(122)
+        .content("嘿嘿嘿")
+        .amount(new BigDecimal("100002.33"))
+        .length(new BigInteger("100000000002"))
+        .createTime(new Date())
+        .updateTime(new Date())
+        .build();
+
+// 执行修改操作
+DBUtils.get(jdbcTemplate).update("m_user_info", cardInfoPO, conditionBuilder);
+```
+
+### 单表删除
+
+```java
+// 创建删除条件
+ConditionBuilder = conditionBuilder = ConditionBuilder.createCondition()
+                .add("id = ?", "00df4362-d7ad-48d2-8bcb-05cf859b7e64");
+// 执行删除操作
+DBUtils.get(jdbcTemplate).delete("m_user_info", conditionBuilder);
+```
+
+### 自定义SQL查询
+
+```java
+ImsCardInfoPO cardInfoPO = ImsCardInfoPO.builder()
+                .age(122)
+                .build();
+
+DBUtils.get(jdbcTemplate).selectList("select * from m_user_info where age > {age}", cardInfoPO, ImsCardInfoPO.class);
+```
+
+### 自定义SQL分页
+
+```java
+// 查询参数
+PageParamModel pageParamModel = PageParamModel
+                .getPageParamModel(1, 10)
+                        .setParam(
+                                ImsCardInfoPO.builder()
+                                    .age(10)
+                                    .build()
+                        );
+
+// 执行查询操作
+PageModel<ImsCardInfoPO> pageModel = DBUtils.get(jdbcTemplate).selectPage("select * from m_user_info where age > {age}", pageParamModel, ImsCardInfoPO.class);
 ```
 
 ### 并发处理任务
@@ -62,8 +159,6 @@ MagicianDataProcessing.getConcurrentTaskSync()
 
 ### 并发处理List，Set等所有Collection类集合里的元素
 
-同步执行
-
 ```java
 // 假如有一个List需要并发处理里面的元素
 List<String> dataList = new ArrayList<>();
@@ -88,36 +183,6 @@ MagicianDataProcessing.getConcurrentCollectionSync()
             }
         
         }, 10, 1, TimeUnit.MINUTES);
-```
-
-异步执行
-
-```java
-// 假如有一个List需要并发处理里面的元素
-List<String> dataList = new ArrayList<>();
-
-// 只需要将他传入asyncRunner方法即可，每个参数的具体含义可以参考文档
-MagicianDataProcessing.getConcurrentCollectionAsync()
-        .asyncRunner(dataList, data -> {
-
-            // 这里可以拿到List里的元素，进行处理
-            System.out.println(data);
-    
-        }, 10, 1, TimeUnit.MINUTES)
-        .start();
-
-// 也可以用asyncGroupRunner方法，每个参数的具体含义可以参考文档
-MagicianDataProcessing.getConcurrentCollectionAsync()
-        .asyncGroupRunner(dataList, data -> {
-
-            // 这里是每一组List
-            for(String item : data){
-                // 这里可以拿到List里的元素，进行处理
-                System.out.println(data);
-            }
-        
-        }, 10, 1, TimeUnit.MINUTES)
-        .start();
 ```
 
 ### 生产者与消费者
