@@ -45,15 +45,15 @@ ConditionBuilder conditionBuilder = ConditionBuilder.createCondition()
                 .add(" order by age desc", Condition.NOT_WHERE);
 
 // 执行查询操作
-List<ImsCardInfoPO> imsCardInfoPOS = DBUtils.get(jdbcTemplate)
-        .select("m_user_info", conditionBuilder, ImsCardInfoPO.class);
+List<DemoPO> demoPOS = DBUtils.get(jdbcTemplate)
+        .select("m_user_info", conditionBuilder, DemoPO.class);
 ```
 
 #### 单表插入
 
 ```java
 // 创建要插入的对象和值
-ImsCardInfoPO cardInfoPO = ImsCardInfoPO.builder()
+DemoPO demoPO = DemoPO.builder()
                     .id(UUID.randomUUID().toString())
                     .age(18)
                     .content("哈哈哈")
@@ -64,7 +64,7 @@ ImsCardInfoPO cardInfoPO = ImsCardInfoPO.builder()
                     .build();
 
 // 执行插入操作
-DBUtils.get(jdbcTemplate).insert("m_user_info", cardInfoPO);
+DBUtils.get(jdbcTemplate).insert("m_user_info", demoPO);
 ```
 
 #### 单表更新
@@ -75,7 +75,7 @@ ConditionBuilder = conditionBuilder = ConditionBuilder.createCondition()
                 .add("id = ? and age = ?", "00df4362-d7ad-48d2-8bcb-05cf859b7e64", 500);
 
 // 需要修改的字段和对应的值
-ImsCardInfoPO cardInfoPO = ImsCardInfoPO.builder()
+DemoPO demoPO = DemoPO.builder()
         .age(122)
         .content("嘿嘿嘿")
         .amount(new BigDecimal("100002.33"))
@@ -85,7 +85,7 @@ ImsCardInfoPO cardInfoPO = ImsCardInfoPO.builder()
         .build();
 
 // 执行修改操作
-DBUtils.get(jdbcTemplate).update("m_user_info", cardInfoPO, conditionBuilder);
+DBUtils.get(jdbcTemplate).update("m_user_info", demoPO, conditionBuilder);
 ```
 
 #### 单表删除
@@ -101,11 +101,11 @@ DBUtils.get(jdbcTemplate).delete("m_user_info", conditionBuilder);
 #### 自定义SQL查询
 
 ```java
-ImsCardInfoPO cardInfoPO = ImsCardInfoPO.builder()
+DemoPO demoPO = DemoPO.builder()
                 .age(122)
                 .build();
 
-DBUtils.get(jdbcTemplate).selectList("select * from m_user_info where age > {age}", cardInfoPO, ImsCardInfoPO.class);
+DBUtils.get(jdbcTemplate).selectList("select * from m_user_info where age > {age}", demoPO, DemoPO.class);
 ```
 
 #### 自定义SQL分页
@@ -115,13 +115,13 @@ DBUtils.get(jdbcTemplate).selectList("select * from m_user_info where age > {age
 PageParamModel pageParamModel = PageParamModel
                 .getPageParamModel(1, 10)
                         .setParam(
-                                ImsCardInfoPO.builder()
+                                DemoPO.builder()
                                     .age(10)
                                     .build()
                         );
 
 // 执行查询操作
-PageModel<ImsCardInfoPO> pageModel = DBUtils.get(jdbcTemplate).selectPage("select * from m_user_info where age > {age}", pageParamModel, ImsCardInfoPO.class);
+PageModel<DemoPO> pageModel = DBUtils.get(jdbcTemplate).selectPage("select * from m_user_info where age > {age}", pageParamModel, DemoPO.class);
 ```
 
 ### 03 并发处理任务
