@@ -14,7 +14,7 @@ JDK17
 
 ## 文档
 
-[https://magician-io.com/tools](https://magician-io.com/tools)
+[https://magician-io.com/magic](https://magician-io.com/magic)
 
 ## 示例
 
