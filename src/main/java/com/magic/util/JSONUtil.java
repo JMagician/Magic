@@ -1,6 +1,6 @@
 package com.magic.util;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.alibaba.fastjson2.JSON;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,14 +26,13 @@ public class JSONUtil {
             return null;
         }
         try {
-            ObjectMapper objectMapper = new ObjectMapper();
             if(obj instanceof String){
-                return objectMapper.readValue(obj.toString(), cls);
+                return JSON.parseObject(obj.toString(), cls);
             } else {
-                return objectMapper.readValue(objectMapper.writeValueAsString(obj), cls);
+                return JSON.parseObject(JSON.toJSONString(obj), cls);
             }
         } catch (Exception e){
-            logger.error("An exception occurs when converting an object to another Java object through jackson", e);
+            logger.error("JSONUtil toJavaObject error", e);
             return null;
         }
     }
@@ -64,11 +63,10 @@ public class JSONUtil {
             return "";
         }
         try {
-            ObjectMapper objectMapper = new ObjectMapper();
             if(obj instanceof String){
                 return obj.toString();
             } else {
-                return objectMapper.writeValueAsString(obj);
+                return JSON.toJSONString(obj);
             }
         } catch (Exception e){
             logger.error("Convert object to JSON string exception", e);

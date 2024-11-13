@@ -23,7 +23,7 @@ JDK17
 <dependency>
     <groupId>com.github.yuyenews</groupId>
     <artifactId>Magic</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
 </dependency>
 ```
 
