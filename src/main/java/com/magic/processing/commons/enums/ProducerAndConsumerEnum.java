@@ -6,5 +6,6 @@ package com.magic.processing.commons.enums;
 public enum ProducerAndConsumerEnum {
     CONSUMER, // 消费者
     PRODUCER, // 生产者
+    MONITOR, // 监控
     ALL; // 所有
 }
