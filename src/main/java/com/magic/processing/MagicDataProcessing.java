@@ -59,7 +59,9 @@ public class MagicDataProcessing {
      * @return
      */
     public static MagicProducerAndConsumerManager getProducerAndConsumerManager(){
-        return new MagicProducerAndConsumerManager();
+        // 记录任务执行开始时间
+        final long startTime = System.currentTimeMillis();
+        return new MagicProducerAndConsumerManager(startTime);
     }
 
 }
