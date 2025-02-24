@@ -5,7 +5,6 @@ import com.magic.processing.pac.MagicConsumer;
 import com.magic.processing.pac.MagicMonitor;
 import com.magic.processing.pac.MagicProducer;
 
-import java.util.UUID;
 import java.util.concurrent.atomic.LongAdder;
 
 public class OneToManyDemo {
@@ -17,10 +16,16 @@ public class OneToManyDemo {
         MagicDataProcessing
                 .getProducerAndConsumerManager()
                 .addProducer(magicProducer)
-                .addConsumer(
-                        createConsumer(),
-                        createConsumer()
-                )
+                .addConsumer(disruptor-> {
+                    disruptor.handleEventsWithWorkerPool(
+                            createConsumer(),
+                            createConsumer(),
+                            createConsumer(),
+                            createConsumer(),
+                            createConsumer(),
+                            createConsumer()
+                    );
+                })
                 .addMonitor(magicMonitor)
                 .start()
                 .listenShutdown(() -> {
@@ -37,7 +42,7 @@ public class OneToManyDemo {
             count.increment();
             this.publish(count.longValue());
 
-            if (count.longValue() >= 10000) {
+            if (count.longValue() >= 10000000) {
                 this.shutDownNow();
             }
         }
@@ -52,13 +57,8 @@ public class OneToManyDemo {
             }
 
             @Override
-            public String initId() {
-                return UUID.randomUUID().toString();
-            }
-
-            @Override
-            public void doRunner(final Object data) {
-                System.out.println(data);
+            public void doRunner(String id, final Object data) {
+                // System.out.println(data);
             }
         };
     }

@@ -11,14 +11,11 @@ public class DemoConsumerOne extends MagicConsumer {
     }
 
     @Override
-    public void doRunner(Object data) {
+    public void doRunner(String id, Object data) {
         try {
             Thread.sleep(1000);
 
-            System.out.println("dataType: " + data + "_" + data.getClass().getSimpleName());
-            System.out.println("taskCount: " + this.getTaskCount());
-            System.out.println("data:" + data);
-            System.out.println("------------------------------------------------");
+            System.out.printf("1: id: %s, data: %s\n------------------------------------------------\n", id, data);
         } catch (Exception e) {
             e.printStackTrace();
         }

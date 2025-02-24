@@ -1,6 +1,9 @@
 package com.magic.processing.pac;
 
-import com.magic.util.StringUtils;
+import com.lmax.disruptor.RingBuffer;
+import com.lmax.disruptor.YieldingWaitStrategy;
+import com.lmax.disruptor.dsl.Disruptor;
+import com.lmax.disruptor.dsl.ProducerType;
 import com.magic.processing.commons.enums.ProducerAndConsumerEnum;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,6 +15,7 @@ import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 /**
  * 任务管理器
@@ -24,19 +28,6 @@ public class MagicProducerAndConsumerManager {
      * 启动开始四件
      */
     private final long startTime;
-    /**
-     * 消费者下标索引
-     */
-    private int consumerIndex = 0;
-    /**
-     * 消费者数量
-     */
-    private int consumerSize = 0;
-    /**
-     * 消费者集合
-     */
-    private List<LinkedBlockingQueue<MagicConsumer>> consumerGroups = new ArrayList<>();
-    private List<LinkedBlockingQueue<MagicConsumer>> backConsumerGroups = new ArrayList<>();
 
     /**
      * 生产者集合
@@ -63,33 +54,28 @@ public class MagicProducerAndConsumerManager {
      */
     private ThreadPoolExecutor monitorPoolExecutor;
 
+    private Consumer<Disruptor<MagicEvent>> consumerLambda;
+    private Disruptor<MagicEvent> disruptor;
+    private RingBuffer<MagicEvent> ringBuffer;
+
     public MagicProducerAndConsumerManager(final long startTime) {
         this.startTime = startTime;
     }
 
     /**
      * 添加一个消费者
-     * @param inputConsumers
+     *
+     * @param consumerLambda
      * @return
      */
-    public MagicProducerAndConsumerManager addConsumer(MagicConsumer... inputConsumers) {
-        consumerSize = consumerSize + inputConsumers.length;
-        final LinkedBlockingQueue<MagicConsumer> consumers = new LinkedBlockingQueue<>();
-        final LinkedBlockingQueue<MagicConsumer> backConsumers = new LinkedBlockingQueue<>();
-        for (int i = 0; i < inputConsumers.length; i++) {
-            final MagicConsumer inputConsumer = inputConsumers[i];
-            inputConsumer.setIndex(consumerIndex, i);
-            consumers.add(inputConsumer);
-            backConsumers.add(inputConsumer);
-        }
-        consumerGroups.add(consumerIndex, consumers);
-        backConsumerGroups.add(consumerIndex, backConsumers);
-        consumerIndex++;
+    public MagicProducerAndConsumerManager addConsumer(Consumer<Disruptor<MagicEvent>> consumerLambda) {
+        this.consumerLambda = consumerLambda;
         return this;
     }
 
     /**
      * 添加一个生产者
+     *
      * @param producer
      * @return
      */
@@ -112,19 +98,49 @@ public class MagicProducerAndConsumerManager {
 
     /**
      * 执行
+     *
      * @throws Exception
      */
     public MagicProducerAndConsumerManager start() throws Exception {
-        // 初始化生产者线程池
-        producersPoolExecutor = new ThreadPoolExecutor(consumerSize,
-                consumerSize,
+        int processors = Runtime.getRuntime().availableProcessors();
+        int activeThreads = Thread.activeCount();
+        int coefficient = 2; // 系数
+        int maxThreads = processors * coefficient + activeThreads;
+
+        logger.info("当前系统可用处理器数量:{}", processors);
+        logger.info("当前系统最大线程数:{}", maxThreads);
+
+        // 初始化消费者线程池
+        consumersPoolExecutor = new ThreadPoolExecutor(maxThreads,
+                maxThreads,
                 1,
                 TimeUnit.MINUTES,
                 new LinkedBlockingQueue<>());
 
-        // 初始化消费者线程池
-        consumersPoolExecutor = new ThreadPoolExecutor(consumerSize,
-                consumerSize,
+        // final WaitStrategy waitStrategy = new BlockingWaitStrategy();
+        final YieldingWaitStrategy waitStrategy = new YieldingWaitStrategy();
+        // Create Disruptor
+        disruptor = new Disruptor<>(
+                MagicEvent::new,
+                1024, // Ring buffer size
+                consumersPoolExecutor,
+                ProducerType.MULTI,
+                waitStrategy
+        );
+
+        // 消费 Disruptor
+        consumerLambda.accept(disruptor);
+
+        // Start disruptor
+        disruptor.start();
+
+        // 创建RingBuffer
+        ringBuffer = disruptor.getRingBuffer();
+
+
+        // 初始化生产者线程池
+        producersPoolExecutor = new ThreadPoolExecutor(producers.size(),
+                producers.size(),
                 1,
                 TimeUnit.MINUTES,
                 new LinkedBlockingQueue<>());
@@ -142,24 +158,13 @@ public class MagicProducerAndConsumerManager {
             monitorPoolExecutor.submit(monitor);
         }
 
-        // 开启消费者线程
-        Map<String, Object> idMap = new HashMap<>();
-        for (final LinkedBlockingQueue<MagicConsumer> consumers : consumerGroups) {
-            for (final MagicConsumer consumer : consumers) {
-                checkId(idMap, consumer.getId());
-
-                consumersPoolExecutor.submit(consumer);
-
-            }
-        }
-
         // 开启生产者线程
-        idMap = new HashMap<>();
+        final Map<String, Object> idMap = new HashMap<>();
         for (MagicProducer producer : producers) {
 
             checkId(idMap, producer.getId());
 
-            producer.addConsumerGroups(consumerGroups);
+            producer.setRingBuffer(ringBuffer);
             producersPoolExecutor.submit(producer);
         }
 
@@ -169,13 +174,14 @@ public class MagicProducerAndConsumerManager {
 
     /**
      * 校验ID，避免出现相同的ID
+     *
      * @param idMap
      * @param id
      * @throws Exception
      */
     private void checkId(Map<String, Object> idMap, String id) throws Exception {
         // 这里做了一个校验，避免出现相同的ID
-        if(idMap.get(id) != null){
+        if (idMap.get(id) != null) {
             throw new Exception("duplicate producer id exists");
         }
         idMap.put(id, true);
@@ -204,7 +210,7 @@ public class MagicProducerAndConsumerManager {
         producersPoolExecutor.shutdown();
         while (true) {
             try {
-                if (producersPoolExecutor.awaitTermination(1, TimeUnit.MINUTES)) break;
+                if (producersPoolExecutor.awaitTermination(1, TimeUnit.SECONDS)) break;
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
@@ -212,6 +218,7 @@ public class MagicProducerAndConsumerManager {
         }
         logger.info("producer 线程池已经关闭！");
 
+        disruptor.shutdown();
         shutdown(ProducerAndConsumerEnum.CONSUMER);
         shutdown(ProducerAndConsumerEnum.MONITOR);
         runnable.run();
@@ -239,24 +246,9 @@ public class MagicProducerAndConsumerManager {
         }
     }
 
-    /**
-     * 停止所有生产者
-     */
-    public void shutdownAllProducer(){
-        shutdownProducer(null);
-    }
-
-    /**
-     * 停止所有消费者
-     */
-    public void shutdownAllConsumer(){
-        shutdownConsumer(null);
-    }
-
 
     /**
      * 停止指定的监控者
-     *
      */
     public void shutdownMonitor() {
         if (monitor != null) {
@@ -274,7 +266,7 @@ public class MagicProducerAndConsumerManager {
             monitorPoolExecutor.shutdown();
             while (true) {
                 try {
-                    if (monitorPoolExecutor.awaitTermination(1, TimeUnit.MINUTES)) break;
+                    if (monitorPoolExecutor.awaitTermination(1, TimeUnit.SECONDS)) break;
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
@@ -288,23 +280,18 @@ public class MagicProducerAndConsumerManager {
     /**
      * 停止指定的生产者
      *
-     * @param id
      */
-    public void shutdownProducer(String id) {
+    public void shutdownAllProducer() {
         for (MagicProducer producer : producers) {
-            if (StringUtils.isEmpty(id) || id.equals(producer.getId())) {
-                producer.shutDownNow();
-            }
+            producer.shutDownNow();
         }
 
         while (true) {
             boolean isAllStop = true;
             for (MagicProducer producer : producers) {
-                if (StringUtils.isEmpty(id) || id.equals(producer.getId())) {
-                    if (!producer.isShutdowned()) {
-                        isAllStop = false;
-                        break;
-                    }
+                if (!producer.isShutdowned()) {
+                    isAllStop = false;
+                    break;
                 }
             }
             if (isAllStop) {
@@ -320,7 +307,7 @@ public class MagicProducerAndConsumerManager {
         producersPoolExecutor.shutdown();
         while (true) {
             try {
-                if (producersPoolExecutor.awaitTermination(1, TimeUnit.MINUTES)) break;
+                if (producersPoolExecutor.awaitTermination(1, TimeUnit.SECONDS)) break;
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
@@ -331,44 +318,12 @@ public class MagicProducerAndConsumerManager {
 
     /**
      * 停止指定的消费者
-     *
-     * @param id
      */
-    public void shutdownConsumer(String id) {
-        for (final LinkedBlockingQueue<MagicConsumer> consumers : backConsumerGroups) {
-            for (MagicConsumer consumer : consumers) {
-                if (StringUtils.isEmpty(id) || id.equals(consumer.getId())) {
-                    consumer.shutDownNow();
-                }
-            }
-        }
-
-        while (true) {
-            boolean isAllStop = true;
-            for (final LinkedBlockingQueue<MagicConsumer> consumers : backConsumerGroups) {
-                for (MagicConsumer consumer : consumers) {
-                    if (StringUtils.isEmpty(id) || id.equals(consumer.getId())) {
-                        if (!consumer.isShutdowned()) {
-                            isAllStop = false;
-                            break;
-                        }
-                    }
-                }
-            }
-            if (isAllStop) {
-                break;
-            }
-            try {
-                TimeUnit.SECONDS.sleep(1);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
+    public void shutdownAllConsumer() {
         consumersPoolExecutor.shutdown();
         while (true) {
             try {
-                if (consumersPoolExecutor.awaitTermination(1, TimeUnit.MINUTES)) break;
+                if (consumersPoolExecutor.awaitTermination(1, TimeUnit.SECONDS)) break;
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }

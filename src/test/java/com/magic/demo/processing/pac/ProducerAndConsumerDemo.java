@@ -17,27 +17,25 @@ public class ProducerAndConsumerDemo {
         MagicDataProcessing.getProducerAndConsumerManager()
                 .addProducer(producerOne)
                 .addProducer(producerTwo)
-                .addConsumer(one)
-                .addConsumer(two)
-                .addConsumer(three)
+                .addConsumer(disruptor ->
+                        disruptor.handleEventsWithWorkerPool(one)
+                                .then(two)
+                                .then(three)
+                )
                 .start();
 
-        new Thread(()->{
-            while (true){
+        new Thread(() -> {
+            while (true) {
 
                 try {
-                    System.out.println("taskCount1, 1p:"+one.getProducerTaskCount(producerOne.getId()) +", 2p:"+one.getProducerTaskCount(producerTwo.getId()));
-                    System.out.println("taskCount2, 1p:"+two.getProducerTaskCount(producerOne.getId()) +", 2p:"+two.getProducerTaskCount(producerTwo.getId()));
-                    System.out.println("taskCount3, 1p:"+three.getProducerTaskCount(producerOne.getId()) +", 2p:"+three.getProducerTaskCount(producerTwo.getId()));
-                    System.out.println("----------------------------------------");
                     Thread.sleep(1000);
-                } catch (Exception e){
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
         }).start();
 
-        while (true){
+        while (true) {
             Thread.sleep(10000000000L);
         }
 
