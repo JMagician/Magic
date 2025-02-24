@@ -5,11 +5,14 @@ import com.magic.processing.pac.MagicConsumer;
 public class DemoConsumerThree extends MagicConsumer {
 
     @Override
-    public void doRunner(String id, Object data) {
+    public void doRunner(Object data) {
         try {
-            Thread.sleep(1000);
+            Thread.sleep(10000);
 
-            System.out.printf("3: id: %s, data: %s\n------------------------------------------------\n", id, data);
+            System.out.println("dataType3: " + data + "_" + data.getClass().getSimpleName());
+            System.out.println("taskCount3: " + this.getTaskCount());
+            System.out.println("data3:" + data);
+            System.out.println("3------------------------------------------------");
         } catch (Exception e) {
             e.printStackTrace();
         }

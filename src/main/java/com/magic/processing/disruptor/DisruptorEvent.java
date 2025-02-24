@@ -1,6 +1,9 @@
-package com.magic.processing.pac;
+package com.magic.processing.disruptor;
 
-public class MagicEvent {
+
+import com.magic.processing.commons.TaskData;
+
+public class DisruptorEvent {
     private TaskData taskData;
     
     public void setTaskData(TaskData taskData) {
