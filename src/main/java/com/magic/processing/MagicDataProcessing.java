@@ -6,6 +6,7 @@ import com.magic.processing.concurrent.collection.ConcurrentCollectionAsync;
 import com.magic.processing.concurrent.collection.ConcurrentCollectionSync;
 import com.magic.processing.concurrent.map.ConcurrentMapAsync;
 import com.magic.processing.concurrent.map.ConcurrentMapSync;
+import com.magic.processing.disruptor.DisruptorProducerAndConsumerManager;
 import com.magic.processing.pac.MagicProducerAndConsumerManager;
 
 /**
@@ -59,7 +60,18 @@ public class MagicDataProcessing {
      * @return
      */
     public static MagicProducerAndConsumerManager getProducerAndConsumerManager(){
-        return new MagicProducerAndConsumerManager();
+        // 记录任务执行开始时间
+        final long startTime = System.currentTimeMillis();
+        return new MagicProducerAndConsumerManager(startTime);
+    }
+    /**
+     * 创建任务生产者、消费者模型对象
+     * @return
+     */
+    public static DisruptorProducerAndConsumerManager getDisruptorProducerAndConsumerManager(){
+        // 记录任务执行开始时间
+        final long startTime = System.currentTimeMillis();
+        return new DisruptorProducerAndConsumerManager(startTime);
     }
 
 }

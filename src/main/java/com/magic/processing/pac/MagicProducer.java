@@ -1,11 +1,13 @@
 package com.magic.processing.pac;
 
+import com.magic.processing.commons.TaskData;
 import com.magic.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * 生产者线程
@@ -22,17 +24,20 @@ public abstract class MagicProducer implements Runnable {
     /**
      * 它所对应的消费者
      */
-    private List<MagicConsumer> consumers;
+    private List<LinkedBlockingQueue<MagicConsumer>> consumerGroups;
+    private final List<LinkedBlockingQueue<MagicConsumer>> freeConsumerGroups = new ArrayList<>();
 
-    /**
-     * 他所对应的空闲消费者
-     */
-    private List<MagicConsumer> freeConsumers;
 
     /**
      * 是否要停止
      */
     private boolean shutdown;
+
+    /**
+     * 是否已停止
+     */
+    private boolean shutdowned;
+
 
     /**
      * 是否等所有消费者都空了以后，才进行下一轮
@@ -59,12 +64,18 @@ public abstract class MagicProducer implements Runnable {
 
     /**
      * 添加消费者
-     * @param consumers
+     *
+     * @param consumerGroups
      */
-    public void addConsumer(List<MagicConsumer> consumers){
-        this.consumers = consumers;
-        for(MagicConsumer consumer : this.consumers){
-            consumer.initProducerTaskCount(id);
+    public void addConsumerGroups(List<LinkedBlockingQueue<MagicConsumer>> consumerGroups) {
+        this.consumerGroups = consumerGroups;
+
+        for (final LinkedBlockingQueue<MagicConsumer> consumerGroup : consumerGroups) {
+            freeConsumerGroups.add(new LinkedBlockingQueue<>());
+
+            for (final MagicConsumer consumer : consumerGroup) {
+                consumer.initProducerTaskCount(id);
+            }
         }
     }
 
@@ -73,11 +84,35 @@ public abstract class MagicProducer implements Runnable {
      * @param t
      */
     public void publish(Object t){
-        if(freeConsumers == null || freeConsumers.size() == 0){
+        if (consumerGroups == null || consumerGroups.isEmpty()) {
             throw new NullPointerException("");
         }
-        for(MagicConsumer consumer : freeConsumers){
-            consumer.addTask(new TaskData(id, t));
+
+        for (int i = 0; i < consumerGroups.size(); i++) {
+            final LinkedBlockingQueue<MagicConsumer> consumerGroup = consumerGroups.get(i);
+
+            try {
+                if (allFree) {
+                    final LinkedBlockingQueue<MagicConsumer> freeConsumerGroup = freeConsumerGroups.get(i);
+                    if (consumerGroup.isEmpty()) {
+                        while (!freeConsumerGroup.isEmpty()) {
+                            consumerGroup.put(freeConsumerGroup.take());
+                        }
+                    }
+
+                    if (!consumerGroup.isEmpty()) {
+                        MagicConsumer magicConsumer = consumerGroup.take();
+                        freeConsumerGroup.put(magicConsumer);
+                        magicConsumer.addTask(new TaskData(id, t));
+                    }
+                } else {
+                    MagicConsumer magicConsumer = consumerGroup.take();
+                    magicConsumer.addTask(new TaskData(id, t));
+                    consumerGroup.put(magicConsumer);
+                }
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
@@ -86,57 +121,22 @@ public abstract class MagicProducer implements Runnable {
      */
     @Override
     public void run(){
-        freeConsumers = consumers;
-
-        while (shutdown == false){
+        while (true) {
+            if (shutdown) {
+                this.shutdowned = true;
+                break;
+            }
             try {
                 // 生产数据，并投喂给消费者
                 producer();
 
                 // 如果loop设置为false，代表只执行一次，所以直接跳出run方法
-                if(loop == false){
+                if (!loop) {
                     return;
                 }
 
-                // 一轮投喂结束后，检测有没有空闲消费者，如果没有就阻塞在这，直到有空闲消费者出现
-                await();
-            } catch (Exception e){
+            } catch (Exception e) {
                 logger.error("DataProducer run error, id:{}", id, e);
-            }
-        }
-    }
-
-    /**
-     * 检测有没有空闲消费者，如果没有就阻塞在这，直到有空闲消费者出现
-     */
-    private void await(){
-        while (true) {
-            try {
-                // 检测有没有空闲消费者
-                freeConsumers = new ArrayList<>();
-                for (MagicConsumer consumer : consumers) {
-                    if (consumer.isPending(id)) {
-                        freeConsumers.add(consumer);
-                    } else if (allFree) {
-                        // 如果allFree设置为true，那么只要发现了不空闲的消费者就会继续等待
-                        // 直到所有消费者都空闲了才进行下一轮
-                        freeConsumers = new ArrayList<>();
-                        break;
-                    }
-                }
-
-                // 如果这里能拿到空闲的消费者，就直接进行下一轮
-                // 而且生产者发布的数据只会推送到这几个消费者里面
-                // 这是为了照顾消费者的消费能力，如果不管不顾随便投喂，会导致队列积压，造成内存溢出
-                if (freeConsumers.size() > 0) {
-                    break;
-                }
-
-                // 没有就阻塞100毫秒，然后再检测一次
-                Thread.sleep(100);
-                logger.info("DataProducer execProducer awaiting, id:{}......", id);
-            } catch (Exception e){
-                logger.error("DataProducer execProducer await error, id:{}", id, e);
             }
         }
     }
@@ -177,5 +177,9 @@ public abstract class MagicProducer implements Runnable {
      */
     public boolean getAllFree(){
         return false;
+    }
+
+    public boolean isShutdowned() {
+        return shutdowned;
     }
 }

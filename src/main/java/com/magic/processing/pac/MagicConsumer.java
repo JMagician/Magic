@@ -1,5 +1,6 @@
 package com.magic.processing.pac;
 
+import com.magic.processing.commons.TaskData;
 import com.magic.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -7,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -15,6 +17,15 @@ import java.util.concurrent.atomic.AtomicLong;
 public abstract class MagicConsumer implements Runnable {
 
     private static Logger logger = LoggerFactory.getLogger(MagicConsumer.class);
+
+    /**
+     * perantIndex
+     */
+    private int perantIndex;
+    /**
+     * index
+     */
+    private int index;
 
     /**
      * 任务队列
@@ -37,21 +48,32 @@ public abstract class MagicConsumer implements Runnable {
     private boolean shutdown;
 
     /**
+     * 是否要停止
+     */
+    private boolean shutdowned;
+
+    /**
+     * 队列最大值
+     */
+    private int queueCapacity;
+
+    /**
      * 每个生产者投喂进来的任务数量（剩余量）
      */
     private Map<String, AtomicLong> producerTaskCount;
 
     public MagicConsumer(){
-        this.blockingQueue = new LinkedBlockingQueue<>();
+        this.queueCapacity = getQueueCapacity();
+        this.blockingQueue = new LinkedBlockingQueue<>(queueCapacity);
         this.producerTaskCount = new ConcurrentHashMap<>();
         this.shutdown = false;
         this.execFrequencyLimit = getExecFrequencyLimit();
-        if(this.execFrequencyLimit < 0){
+        if (this.execFrequencyLimit < 0) {
             this.execFrequencyLimit = 0;
         }
 
-        this.id = getId();
-        if(StringUtils.isEmpty(this.id)){
+        this.id = initId();
+        if (StringUtils.isEmpty(this.id)) {
             throw new NullPointerException("consumer id cannot empty");
         }
     }
@@ -76,8 +98,8 @@ public abstract class MagicConsumer implements Runnable {
      * 添加任务
      * @param taskData
      */
-    public void addTask(TaskData taskData){
-        this.blockingQueue.add(taskData);
+    public void addTask(TaskData taskData) throws InterruptedException {
+        this.blockingQueue.put(taskData);
         this.producerTaskCount.get(taskData.getProducerId()).incrementAndGet();
     }
 
@@ -104,14 +126,19 @@ public abstract class MagicConsumer implements Runnable {
      */
     @Override
     public void run() {
-        while (shutdown == false){
+        while (true) {
+
+            if (shutdown && getTaskCount() == 0) {
+                this.shutdowned = true;
+                break;
+            }
             try {
                 // 发送心跳通知
                 pulse(this.id);
 
                 // take一个任务
-                TaskData task = blockingQueue.take();
-                if(task == null){
+                TaskData task = blockingQueue.poll(100, TimeUnit.MILLISECONDS);
+                if (task == null) {
                     continue;
                 }
 
@@ -140,10 +167,10 @@ public abstract class MagicConsumer implements Runnable {
                  * 当然了，这跟消费者的业务逻辑还是有一定关系的，具体情况具体看待
                  *
                  */
-                if(execFrequencyLimit > 0 && (System.currentTimeMillis() - startTime) < execFrequencyLimit){
+                if (execFrequencyLimit > 0 && (System.currentTimeMillis() - startTime) < execFrequencyLimit) {
                     Thread.sleep(execFrequencyLimit);
                 }
-            } catch (Exception e){
+            } catch (Exception e) {
                 logger.error("DataConsumer run error", e);
             }
         }
@@ -172,12 +199,17 @@ public abstract class MagicConsumer implements Runnable {
         this.shutdown = true;
     }
 
+    public String initId() {
+        return this.getClass().getName();
+    }
+
     /**
      * 获取ID
+     *
      * @return
      */
-    public String getId(){
-        return this.getClass().getName();
+    public String getId() {
+        return id;
     }
 
     /**
@@ -199,4 +231,29 @@ public abstract class MagicConsumer implements Runnable {
      * @param data
      */
     public abstract void doRunner(Object data);
+
+
+    /**
+     * 队列最大值
+     */
+    public int getQueueCapacity() {
+        return 100;
+    }
+
+    public void setIndex(final int perantIndex, final int index) {
+        this.perantIndex = perantIndex;
+        this.index = index;
+    }
+
+    public int getIndex() {
+        return index;
+    }
+
+    public int getPerantIndex() {
+        return perantIndex;
+    }
+
+    public boolean isShutdowned() {
+        return shutdowned;
+    }
 }

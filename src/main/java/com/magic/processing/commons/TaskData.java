@@ -1,4 +1,4 @@
-package com.magic.processing.pac;
+package com.magic.processing.commons;
 
 /**
  * 任务对象
