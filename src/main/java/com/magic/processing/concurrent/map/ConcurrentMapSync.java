@@ -8,8 +8,6 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -98,17 +96,11 @@ public class ConcurrentMapSync {
         try {
             List<Map<K, V>> dataGroup = MapsUtil.partition(dataMap, groupSize);
 
-            ThreadPoolExecutor poolExecutor = new ThreadPoolExecutor(dataGroup.size(),
-                    dataGroup.size(),
-                    1,
-                    TimeUnit.MINUTES,
-                    new LinkedBlockingQueue<>());
-
-            CountDownLatch count = new CountDownLatch(poolExecutor.getCorePoolSize());
+            CountDownLatch count = new CountDownLatch(dataGroup.size());
 
             // 给每一组都开一个线程，并发执行
             for (Map<K, V> dataItem : dataGroup) {
-                poolExecutor.submit(() -> {
+                new Thread(() -> {
                     try {
                         concurrentMapGroupRunner.run(dataItem);
                     } catch (Throwable e) {
@@ -116,11 +108,11 @@ public class ConcurrentMapSync {
                     } finally {
                         count.countDown();
                     }
-                });
+                }).start();
             }
 
             // 等所有线程执行结束后，或者超时后，再跳出此方法
-            ProcessingHelper.runnerAwait(timeout, unit, count, poolExecutor);
+            ProcessingHelper.runnerAwait(timeout, unit, count);
 
         } catch (Exception e) {
             logger.error("ConcurrentMapSync syncGroupRunner error", e);
@@ -152,17 +144,11 @@ public class ConcurrentMapSync {
 
             for (Map<K, V> dataItem : dataGroup) {
 
-                ThreadPoolExecutor poolExecutor = new ThreadPoolExecutor(dataItem.size(),
-                        dataItem.size(),
-                        1,
-                        TimeUnit.MINUTES,
-                        new LinkedBlockingQueue<>());
-
-                CountDownLatch count = new CountDownLatch(poolExecutor.getCorePoolSize());
+                CountDownLatch count = new CountDownLatch(dataItem.size());
 
                 // 给组内的每一个元素都开一个线程，并发执行
                 for (Map.Entry<K, V> entry : dataItem.entrySet()) {
-                    poolExecutor.submit(() -> {
+                    new Thread(() -> {
                         try {
                             concurrentMapRunner.run(entry.getKey(), entry.getValue());
                         } catch (Throwable e) {
@@ -170,11 +156,11 @@ public class ConcurrentMapSync {
                         } finally {
                             count.countDown();
                         }
-                    });
+                    }).start();
                 }
 
                 // 等所有线程执行结束后，或者超时后，再执行下一组
-                ProcessingHelper.runnerAwait(timeout, unit, count, poolExecutor);
+                ProcessingHelper.runnerAwait(timeout, unit, count);
             }
         } catch (Exception e) {
             logger.error("ConcurrentMapSync syncRunner error", e);

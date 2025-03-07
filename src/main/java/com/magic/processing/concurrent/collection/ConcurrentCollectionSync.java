@@ -7,8 +7,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -99,17 +97,12 @@ public class ConcurrentCollectionSync {
             // 将集合分成若干组，每组元素由调用者指定
             Collection<Collection<T>> dataGroup = CollectionUtils.partition(dataList, groupSize);
 
-            ThreadPoolExecutor poolExecutor = new ThreadPoolExecutor(dataGroup.size(),
-                    dataGroup.size(),
-                    1,
-                    TimeUnit.MINUTES,
-                    new LinkedBlockingQueue<>());
 
-            CountDownLatch count = new CountDownLatch(poolExecutor.getCorePoolSize());
+            CountDownLatch count = new CountDownLatch(dataGroup.size());
 
             // 给每一组都开一个线程，并发执行
             for (Collection<T> dataItem : dataGroup) {
-                poolExecutor.submit(() -> {
+                new Thread(() -> {
                     try {
                         concurrentCollectionGroupRunner.run(dataItem);
                     } catch (Throwable e) {
@@ -117,11 +110,11 @@ public class ConcurrentCollectionSync {
                     } finally {
                         count.countDown();
                     }
-                });
+                }).start();
             }
 
             // 等所有线程执行结束后，或者超时后，再跳出此方法
-            ProcessingHelper.runnerAwait(timeout, unit, count, poolExecutor);
+            ProcessingHelper.runnerAwait(timeout, unit, count);
         } catch (Exception e) {
             logger.error("ConcurrentProcessingSync syncGroupRunner error", e);
             throw e;
@@ -151,17 +144,11 @@ public class ConcurrentCollectionSync {
 
             for (Collection<T> dataItem : dataGroup) {
 
-                ThreadPoolExecutor poolExecutor = new ThreadPoolExecutor(dataItem.size(),
-                        dataItem.size(),
-                        1,
-                        TimeUnit.MINUTES,
-                        new LinkedBlockingQueue<>());
-
-                CountDownLatch count = new CountDownLatch(poolExecutor.getCorePoolSize());
+                CountDownLatch count = new CountDownLatch(dataItem.size());
 
                 // 给组内的每一个元素都开一个线程，并发执行
                 for (T item : dataItem) {
-                    poolExecutor.submit(() -> {
+                    new Thread(() -> {
                         try {
                             concurrentCollectionRunner.run(item);
                         } catch (Throwable e) {
@@ -169,11 +156,11 @@ public class ConcurrentCollectionSync {
                         } finally {
                             count.countDown();
                         }
-                    });
+                    }).start();
                 }
 
                 // 等所有线程执行结束后，或者超时后，再执行下一组
-                ProcessingHelper.runnerAwait(timeout, unit, count, poolExecutor);
+                ProcessingHelper.runnerAwait(timeout, unit, count);
             }
         } catch (Exception e) {
             logger.error("ConcurrentProcessingSync syncRunner error", e);

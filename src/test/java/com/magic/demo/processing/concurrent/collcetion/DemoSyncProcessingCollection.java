@@ -27,7 +27,7 @@ public class DemoSyncProcessingCollection {
             // 这里是每一组List
             for(String item : data){
                 // 这里可以拿到List里的元素，进行处理
-                System.out.println(data);
+                System.out.println(item);
             }
 
         }, 10, 1, TimeUnit.MINUTES);

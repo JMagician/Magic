@@ -9,8 +9,6 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -83,17 +81,11 @@ public class ConcurrentTaskSync {
             throw new NullPointerException("ConcurrentTaskSync concurrentTaskList is empty");
         }
 
-        ThreadPoolExecutor poolExecutor = new ThreadPoolExecutor(concurrentTaskList.size(),
-                concurrentTaskList.size(),
-                1,
-                TimeUnit.MINUTES,
-                new LinkedBlockingDeque<>());
-
         CountDownLatch count = new CountDownLatch(concurrentTaskList.size());
 
         // 将集合里的任务全部添加到线程池
         for (ConcurrentTask concurrentTask : concurrentTaskList) {
-            poolExecutor.submit(() -> {
+            new Thread(() -> {
                 try {
                     concurrentTask.runnable.run();
                     concurrentTask.concurrentTaskCall.call(ConcurrentTaskResultEnum.SUCCESS, null);
@@ -103,11 +95,11 @@ public class ConcurrentTaskSync {
                 } finally {
                     count.countDown();
                 }
-            });
+            }).start();
         }
 
         // 等所有线程执行结束后，或者超时后，再跳出此方法
-        ProcessingHelper.runnerAwait(timeout, timeUnit, count, poolExecutor);
+        ProcessingHelper.runnerAwait(timeout, timeUnit, count);
     }
 
     /**

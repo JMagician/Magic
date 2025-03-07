@@ -9,9 +9,10 @@ public class DemoSyncProcessingMap {
 
     public static void main(String[] args) {
         Map<String, Object> dataMap = new HashMap<>();
+        dataMap.put("a", "aa");
 
         MagicDataProcessing.getConcurrentMapSync().syncRunner(dataMap, (key, value) -> {
-
+            System.out.println(key + "-" + value);
         });
 
         MagicDataProcessing.getConcurrentMapSync().syncGroupRunner(dataMap, data -> {

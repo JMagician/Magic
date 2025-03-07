@@ -6,8 +6,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -23,9 +21,8 @@ public class ProcessingHelper {
      * @param timeout      每一组的超时时间，单位由unit参数设置
      * @param unit         超时时间单位
      * @param count
-     * @param poolExecutor
      */
-    public static void runnerAwait(long timeout, TimeUnit unit, CountDownLatch count, ThreadPoolExecutor poolExecutor) {
+    public static void runnerAwait(long timeout, TimeUnit unit, CountDownLatch count) {
         try {
             if (timeout <= 0) {
                 // 如果没有设置超时时间，则一直等待，直到线程全部完成为止
@@ -37,9 +34,6 @@ public class ProcessingHelper {
         } catch (Exception e) {
             logger.error("Concurrent await error", e);
         }
-
-        // 不管是超时未完成，还是已经执行完了，都要释放线程池
-        poolExecutor.shutdownNow();
     }
 
     /**
@@ -50,29 +44,12 @@ public class ProcessingHelper {
         if(CollectionUtils.isEmpty(runnableList)){
             throw new NullPointerException("runnableList is empty");
         }
-
-        ThreadPoolExecutor poolExecutor = null;
-
         try {
-            poolExecutor = new ThreadPoolExecutor(
-                    runnableList.size(),
-                    runnableList.size(),
-                    1,
-                    TimeUnit.MINUTES,
-                    new LinkedBlockingQueue<>()
-            );
-
             for(Runnable runnable : runnableList){
-                poolExecutor.submit(runnable);
+                new Thread(runnable).start();
             }
         } catch (Exception e){
             throw e;
-        } finally {
-            if(poolExecutor == null) {
-                return;
-            }
-
-            poolExecutor.shutdown();
         }
     }
 }
