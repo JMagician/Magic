@@ -61,6 +61,25 @@ public class SqlBuilder {
     }
 
     /**
+     * 添加where条件
+     * @param sql
+     * @return
+     */
+    public SqlBuilder append(String sql){
+        return append(sql, true);
+    }
+
+    /**
+     * 添加where条件
+     * @param sql
+     * @param callBack
+     * @return
+     */
+    public SqlBuilder append(String sql, CallBack callBack){
+        return append(sql, true, callBack);
+    }
+
+    /**
      * 获取完整的sql
      * @return
      */
