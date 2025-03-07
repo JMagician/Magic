@@ -14,7 +14,7 @@ JDK17
 
 ## 文档
 
-[https://magician-io.com/magic](https://magician-io.com/magic)
+[https://github.com/JMagician/Magic/blob/dev/Document.md](https://github.com/JMagician/Magic/blob/dev/Document.md)
 
 ## 示例
 
@@ -23,7 +23,7 @@ JDK17
 <dependency>
     <groupId>com.github.yuyenews</groupId>
     <artifactId>Magic</artifactId>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
 </dependency>
 ```
 
