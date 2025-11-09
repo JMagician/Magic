@@ -12,7 +12,7 @@ JDK17+
 <dependency>
     <groupId>com.github.yuyenews</groupId>
     <artifactId>Magic</artifactId>
-    <version>1.0.3</version>
+    <version>1.0.5</version>
 </dependency>
 ```
 
@@ -26,25 +26,11 @@ MagicDataProcessing.getConcurrentTaskSync()
 
                     // 在这里可以写上任务的业务逻辑
 
-                }, (result, e) -> {
-                    // 此任务处理后的回调
-                    if(result.equals(ConcurrentTaskResultEnum.FAIL)){
-                        // 任务失败，此时e里面有详细的异常信息
-                    } else if(result.equals(ConcurrentTaskResultEnum.SUCCESS)) {
-                        // 任务成功，此时e是空的
-                    }
                 })
                 .add(() -> { // 添加一个任务
 
                     // 在这里可以写上任务的业务逻辑
 
-                }, (result, e) -> {
-                    // 此任务处理后的回调
-                    if(result.equals(ConcurrentTaskResultEnum.FAIL)){
-                        // 任务失败，此时e里面有详细的异常信息
-                    } else if(result.equals(ConcurrentTaskResultEnum.SUCCESS)) {
-                        // 任务成功，此时e是空的
-                    }
                 })
                 .start();
 ```
@@ -441,12 +427,12 @@ MagicDataProcessing.getProducerAndConsumerManager()
 
 ## 数据库操作
 
-此组件重度依赖于SpringBoot，底层是基于JdbcTemplate的扩展，做到了单表操作不需要写SQL，天然支持MySql分页查询，支持在SQL中写入{属性名}占位符，如果你不想用SpringBoot但是又想使用这个组件，可以用[Magician-JDBC](/db/index.md)
+此组件重度依赖于SpringBoot，底层是基于JdbcTemplate的扩展，做到了单表操作不需要写SQL，天然支持MySql和PostgreSQL分页查询，支持在SQL中写入{属性名}占位符。
 
 ### 添加依赖
 
 ```xml
-<!-- mysql driver package -->
+<!-- 如果不用自带的分页查询，那么这里支持任意数据库，否则就只支持MySql和PostgreSQL  -->
 <dependency>
     <groupId>mysql</groupId>
     <artifactId>mysql-connector-java</artifactId>

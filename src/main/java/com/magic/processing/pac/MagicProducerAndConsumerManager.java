@@ -62,8 +62,8 @@ public class MagicProducerAndConsumerManager {
      */
     public void start() throws Exception {
         // 初始化生产者线程池
-        producersPoolExecutor = new ThreadPoolExecutor(consumers.size(),
-                consumers.size(),
+        producersPoolExecutor = new ThreadPoolExecutor(producers.size(),
+                producers.size(),
                 1,
                 TimeUnit.MINUTES,
                 new LinkedBlockingQueue<>());

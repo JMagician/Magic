@@ -4,6 +4,7 @@ import com.magic.db.conversion.ConditionBuilder;
 import com.magic.db.conversion.SqlConversion;
 import com.magic.db.model.Condition;
 import com.magic.db.model.SqlBuilderModel;
+import com.magic.util.DBParamUtil;
 import com.magic.util.JSONUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,7 +81,7 @@ public class SingleTableUtils {
             throw new Exception("For the sake of safety, please write sql for unconditional modification operations.");
         }
         try {
-            Map<String, Object> paramMap = JSONUtil.toMap(data);
+            Map<String, Object> paramMap = DBParamUtil.getParamMap(data);
 
             StringBuffer sql = new StringBuffer();
             sql.append("update ");
@@ -167,7 +168,7 @@ public class SingleTableUtils {
             StringBuffer values = new StringBuffer();
             values.append(") values (");
 
-            Map<String, Object> paramMap = JSONUtil.toMap(data);
+            Map<String, Object> paramMap = DBParamUtil.getParamMap(data);
 
             List<Object> paramList = new ArrayList<>();
 

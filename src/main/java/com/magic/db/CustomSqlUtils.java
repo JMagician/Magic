@@ -169,12 +169,12 @@ public class CustomSqlUtils {
 
         StringBuffer stringBuffer = new StringBuffer();
         stringBuffer.append(sql);
-        stringBuffer.append(" limit {pageStart},{pageSize}");
+        stringBuffer.append(" limit {pageSize} offset {pageStart}");
 
         List<T> resultList = selectList(jdbcTemplate, stringBuffer.toString(), pageParamModel.getParam(), cls);
 
         PageModel<T> pageModel = new PageModel<>();
-        pageModel.setTotal(Integer.parseInt(totalObj.toString()));
+        pageModel.setTotal(Long.parseLong(totalObj.toString()));
         pageModel.setCurrentPage(pageParamModel.getCurrentPage());
         pageModel.setPageSize(pageParamModel.getPageSize());
         pageModel.setPageTotal(getPageTotal(pageModel));
@@ -188,7 +188,11 @@ public class CustomSqlUtils {
      * @param pageModel
      * @return
      */
-    private static int getPageTotal(PageModel pageModel) {
+    private static Long getPageTotal(PageModel pageModel) {
+        if(pageModel.getPageSize() == 0){
+            return 0L;
+        }
+
         if (pageModel.getTotal() % pageModel.getPageSize() == 0) {
             return pageModel.getTotal() / pageModel.getPageSize();
         } else {

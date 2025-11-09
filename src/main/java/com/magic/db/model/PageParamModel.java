@@ -1,6 +1,6 @@
 package com.magic.db.model;
 
-import com.magic.util.JSONUtil;
+import com.magic.util.DBParamUtil;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -45,11 +45,11 @@ public class PageParamModel {
         return param;
     }
 
-    public PageParamModel setParam(Object param) {
+    public PageParamModel setParam(Object param) throws IllegalAccessException {
         if(param == null){
             return this;
         }
-        this.param = JSONUtil.toMap(param);
+        this.param = DBParamUtil.getParamMap(param);
         return this;
     }
 

@@ -23,7 +23,7 @@ JDK17
 <dependency>
     <groupId>com.github.yuyenews</groupId>
     <artifactId>Magic</artifactId>
-    <version>1.0.3</version>
+    <version>1.0.5</version>
 </dependency>
 ```
 
@@ -134,25 +134,11 @@ MagicDataProcessing.getConcurrentTaskSync()
 
                     // 在这里可以写上任务的业务逻辑
 
-                }, (result, e) -> {
-                    // 此任务处理后的回调
-                    if(result.equals(ConcurrentTaskResultEnum.FAIL)){
-                        // 任务失败，此时e里面有详细的异常信息
-                    } else if(result.equals(ConcurrentTaskResultEnum.SUCCESS)) {
-                        // 任务成功，此时e是空的
-                    }
                 })
                 .add(() -> { // 添加一个任务
 
                     // 在这里可以写上任务的业务逻辑
 
-                }, (result, e) -> {
-                    // 此任务处理后的回调
-                    if(result.equals(ConcurrentTaskResultEnum.FAIL)){
-                        // 任务失败，此时e里面有详细的异常信息
-                    } else if(result.equals(ConcurrentTaskResultEnum.SUCCESS)) {
-                        // 任务成功，此时e是空的
-                    }
                 })
                 .start();
 ```

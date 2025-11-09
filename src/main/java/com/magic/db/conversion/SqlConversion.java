@@ -3,11 +3,9 @@ package com.magic.db.conversion;
 
 import com.magic.db.model.Condition;
 import com.magic.db.model.SqlBuilderModel;
-import com.magic.util.JSONUtil;
+import com.magic.util.DBParamUtil;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -18,11 +16,12 @@ public class SqlConversion {
 
     /**
      * 根据条件构造器生成sql和参数
+     *
      * @param sql
      * @param conditions
      * @return
      */
-    public static SqlBuilderModel getSql(StringBuffer sql, List<Condition> conditions){
+    public static SqlBuilderModel getSql(StringBuffer sql, List<Condition> conditions) {
         SqlBuilderModel sqlBuilderModel = new SqlBuilderModel();
         List<Object> params = new ArrayList<>();
         for (Condition condition : conditions) {
@@ -35,7 +34,7 @@ public class SqlConversion {
             if (isNotWhere(condition.getVal())) {
                 continue;
             }
-            for(Object arg : condition.getVal()){
+            for (Object arg : condition.getVal()) {
                 params.add(arg);
             }
         }
@@ -47,11 +46,12 @@ public class SqlConversion {
 
     /**
      * 是否是WHERE条件
+     *
      * @param val
      * @return
      */
-    private static boolean isNotWhere(Object[] val){
-        if(val.length == 1 && val[0].equals(Condition.NOT_WHERE)) {
+    private static boolean isNotWhere(Object[] val) {
+        if (val.length == 1 && val[0].equals(Condition.NOT_WHERE)) {
             return true;
         }
         return false;
@@ -80,11 +80,11 @@ public class SqlConversion {
             return sqlBuilderModel;
         }
 
-        Map<String, Object> jsonObject = JSONUtil.toMap(param);
+        Map<String, Object> jsonObject = DBParamUtil.getParamMap(param);
 
         List<Object> params = new ArrayList<>();
 
-        sql = formatMatcher(sql,params,jsonObject);
+        sql = formatMatcher(sql, params, jsonObject);
 
         sqlBuilderModel.setSql(sql);
         sqlBuilderModel.setParams(params.toArray());
@@ -94,18 +94,19 @@ public class SqlConversion {
 
     /**
      * 将SQL里的{}占位符替换成?
+     *
      * @param sql
      * @param params
      * @param jsonObject
      * @return
      */
-    private static String formatMatcher(String sql,List<Object> params, Map<String, Object> jsonObject){
+    private static String formatMatcher(String sql, List<Object> params, Map<String, Object> jsonObject) {
         Pattern pattern = Pattern.compile("(\\{((?!}).)*\\})");
         Matcher matcher = pattern.matcher(sql);
         while (matcher.find()) {
             String matcherName = matcher.group();
-            sql = sql.replace(matcherName,"?");
-            String filedName = matcherName.replace("{","").replace("}","");
+            sql = sql.replace(matcherName, "?");
+            String filedName = matcherName.replace("{", "").replace("}", "");
             params.add(jsonObject.get(filedName));
         }
         return sql;

@@ -22,12 +22,17 @@ public class PageModel<T> implements Serializable {
     /**
      * 总数据条数
      */
-    private Integer total;
+    private Long total;
 
     /**
      * 总页数
      */
-    private Integer pageTotal;
+    private Long pageTotal;
+
+    /**
+     * 分页标识（业务流转中可以携带附加参数）
+     */
+    private String pageTag;
 
     /**
      * 当前页的数据
@@ -50,19 +55,19 @@ public class PageModel<T> implements Serializable {
         this.pageSize = pageSize;
     }
 
-    public Integer getTotal() {
+    public Long getTotal() {
         return total;
     }
 
-    public void setTotal(Integer total) {
+    public void setTotal(Long total) {
         this.total = total;
     }
 
-    public Integer getPageTotal() {
+    public Long getPageTotal() {
         return pageTotal;
     }
 
-    public void setPageTotal(Integer pageTotal) {
+    public void setPageTotal(Long pageTotal) {
         this.pageTotal = pageTotal;
     }
 
@@ -72,5 +77,13 @@ public class PageModel<T> implements Serializable {
 
     public void setDataList(List<T> dataList) {
         this.dataList = dataList;
+    }
+
+    public String getPageTag() {
+        return pageTag;
+    }
+
+    public void setPageTag(String pageTag) {
+        this.pageTag = pageTag;
     }
 }
