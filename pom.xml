@@ -3,18 +3,9 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
     <groupId>com.github.yuyenews</groupId>
     <artifactId>Magic</artifactId>
     <version>1.0.5</version>
-
-    <developers>
-        <developer>
-            <name>俞晔</name>
-            <url>https://github.com/JMagician/Magic</url>
-            <email>yuyemail@163.com</email>
-        </developer>
-    </developers>
 
     <properties>
         <java.version>17</java.version>
@@ -46,11 +37,22 @@
         </dependency>
     </dependencies>
 
-    <parent>
-        <groupId>org.sonatype.oss</groupId>
-        <artifactId>oss-parent</artifactId>
-        <version>7</version>
-    </parent>
+    <name>Magic</name>
+    <description>Magic是Magician旗下的一个工具包，支持并发处理、生产者与消费者模型、数据库操作等</description>
+    <url>https://github.com/JMagician/Magic</url>
+    <developers>
+        <developer>
+            <name>俞晔</name>
+            <url>https://github.com/JMagician/Magic</url>
+            <email>yuyemail@163.com</email>
+        </developer>
+    </developers>
+    <scm>
+        <connection>scm:git:https://github.com/JMagician/Magic.git</connection>
+        <developerConnection>scm:https://github.com/JMagician/Magic.git</developerConnection>
+        <url>https://github.com/JMagician/Magic</url>
+        <tag>HEAD</tag>
+    </scm>
     <licenses>
         <license>
             <name>The MIT License (MIT)</name>
@@ -58,15 +60,73 @@
             <distribution>repo</distribution>
         </license>
     </licenses>
+    <distributionManagement>
+        <repository>
+            <id>central</id>
+            <name>Central Repository</name>
+            <url>https://central.sonatype.com/api/v1/publisher</url>
+        </repository>
+    </distributionManagement>
 
     <build>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.2.0</version>
+                <version>3.6.3</version>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                        <configuration>
+                            <!-- 禁用严格的文档检查，避免因Javadoc格式问题导致构建失败 -->
+                            <doclint>none</doclint>
+                            <!-- 设置字符编码 -->
+                            <encoding>UTF-8</encoding>
+                            <charset>UTF-8</charset>
+                            <docencoding>UTF-8</docencoding>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>3.3.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <version>3.2.8</version>
+                <executions>
+                    <execution>
+                        <id>sign-artifacts</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>sign</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.sonatype.central</groupId>
+                <artifactId>central-publishing-maven-plugin</artifactId>
+                <version>0.9.0</version>
+                <extensions>true</extensions>
                 <configuration>
-                    <failOnError>false</failOnError>
+                    <publishingServerId>central</publishingServerId>
                 </configuration>
             </plugin>
         </plugins>
